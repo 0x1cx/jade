@@ -963,26 +963,57 @@ do
                     if isOpen then
                         -- render section header: mini tabs or plain title
                         if hasMiniTabs then
-                            local mtX = sectionPos.x + self._padding
-                            local mtY = sectionPos.y - menuTitleSize.y/2
+                            local mtTabH = sectionTitleSize.y + self._padding
+                            local mtY = sectionPos.y - menuTitleSize.y/2 - 2
+                            local mtX = sectionPos.x
+                            local totalTabW = sectionWidth
+                            local tabCount = #sectionContent._mini_tabs
+
+                            -- background strip behind all tabs
+                            self:_Draw(sectionDrawId .. '_mt_strip', 'rect', self._theming.crust, 19, Vector2.new(mtX, mtY), Vector2.new(totalTabW, mtTabH), true)
+
+                            -- individual tab width
+                            local tabW = math.floor(totalTabW / tabCount)
+
                             for mtIdx, mtName in ipairs(sectionContent._mini_tabs) do
                                 local mtDrawId = sectionDrawId .. '_mt_' .. tostring(mtIdx)
-                                local mtSize = self:_GetTextBounds(mtName)
+                                local tabX = mtX + (mtIdx - 1) * tabW
+                                local isLastTab = mtIdx == tabCount
+                                local actualW = isLastTab and (totalTabW - (tabCount - 1) * tabW) or tabW
                                 local isActiveMT = sectionContent._active_mini_tab == mtName
-                                local isHoveringMT = self:_IsMouseWithinBounds(Vector2.new(mtX, mtY), mtSize)
-                                local mtColor = isActiveMT and self._theming.text or self._theming.subtext
-                                self:_Draw(mtDrawId .. '_label', 'text', mtColor, 20, Vector2.new(mtX, mtY), mtName, true)
+                                local isHoveringMT = self:_IsMouseWithinBounds(Vector2.new(tabX, mtY), Vector2.new(actualW, mtTabH))
+
+                                -- tab background
+                                local tabBg = isActiveMT and self._theming.surface0 or (isHoveringMT and self._theming.surface1 or self._theming.crust)
+                                self:_Draw(mtDrawId .. '_bg', 'rect', tabBg, 20, Vector2.new(tabX, mtY), Vector2.new(actualW, mtTabH), true)
+
+                                -- accent bar on active tab (bottom edge)
                                 if isActiveMT then
-                                    self:_Draw(mtDrawId .. '_underline', 'rect', self._theming.accent, 21, Vector2.new(mtX, mtY + mtSize.y + 1), Vector2.new(mtSize.x, 1), true)
+                                    self:_Draw(mtDrawId .. '_accent', 'rect', self._theming.accent, 22, Vector2.new(tabX, mtY + mtTabH - 2), Vector2.new(actualW, 2), true)
                                 else
-                                    self:_Undraw(mtDrawId .. '_underline')
+                                    self:_Undraw(mtDrawId .. '_accent')
                                 end
+
+                                -- separator line between tabs
+                                if mtIdx < tabCount then
+                                    self:_Draw(mtDrawId .. '_sep', 'rect', self._theming.border0, 21, Vector2.new(tabX + actualW, mtY + 2), Vector2.new(1, mtTabH - 4), true)
+                                end
+
+                                -- centered tab label
+                                local mtLabelSize = self:_GetTextBounds(mtName)
+                                local labelX = tabX + math.floor((actualW - mtLabelSize.x) / 2)
+                                local labelY = mtY + math.floor((mtTabH - mtLabelSize.y) / 2)
+                                local mtColor = isActiveMT and self._theming.text or self._theming.subtext
+                                self:_Draw(mtDrawId .. '_label', 'text', mtColor, 22, Vector2.new(labelX, labelY), mtName, true)
+
                                 if isHoveringMT and clickFrame then
                                     sectionContent._active_mini_tab = mtName
                                     clickFrame = false
                                 end
-                                mtX = mtX + mtSize.x + self._padding
                             end
+
+                            -- adjust section height to account for tab strip
+                            sectionHeight = sectionHeight + mtTabH - sectionTitleSize.y/2
                         else
                             self:_Draw(sectionDrawId .. '_title', 'text', self._theming.text, 20, sectionPos + Vector2.new(self._padding, -menuTitleSize.y/2), sectionName, true)
                         end
