@@ -963,48 +963,66 @@ do
                     if isOpen then
                         -- render section header: mini tabs or plain title
                         if hasMiniTabs then
-                            local mtTabH = sectionTitleSize.y + self._padding
+                            local mtTabH = sectionTitleSize.y + self._padding + 4
                             local mtY = sectionPos.y - menuTitleSize.y/2 - 2
                             local mtX = sectionPos.x
                             local totalTabW = sectionWidth
                             local tabCount = #sectionContent._mini_tabs
 
+                            -- outer border around the tab strip
+                            self:_Draw(sectionDrawId .. '_mt_border', 'rect', self._theming.border0, 18, Vector2.new(mtX, mtY), Vector2.new(totalTabW, mtTabH), false)
                             -- background strip behind all tabs
-                            self:_Draw(sectionDrawId .. '_mt_strip', 'rect', self._theming.crust, 19, Vector2.new(mtX, mtY), Vector2.new(totalTabW, mtTabH), true)
+                            self:_Draw(sectionDrawId .. '_mt_strip', 'rect', self._theming.crust, 17, Vector2.new(mtX + 1, mtY + 1), Vector2.new(totalTabW - 2, mtTabH - 2), true)
 
-                            -- individual tab width
-                            local tabW = math.floor(totalTabW / tabCount)
+                            -- individual tab width (inset 1px for border)
+                            local innerW = totalTabW - 2
+                            local tabW = math.floor(innerW / tabCount)
 
                             for mtIdx, mtName in ipairs(sectionContent._mini_tabs) do
                                 local mtDrawId = sectionDrawId .. '_mt_' .. tostring(mtIdx)
-                                local tabX = mtX + (mtIdx - 1) * tabW
+                                local tabX = mtX + 1 + (mtIdx - 1) * tabW
                                 local isLastTab = mtIdx == tabCount
-                                local actualW = isLastTab and (totalTabW - (tabCount - 1) * tabW) or tabW
+                                local actualW = isLastTab and (innerW - (tabCount - 1) * tabW) or tabW
                                 local isActiveMT = sectionContent._active_mini_tab == mtName
                                 local isHoveringMT = self:_IsMouseWithinBounds(Vector2.new(tabX, mtY), Vector2.new(actualW, mtTabH))
 
-                                -- tab background
-                                local tabBg = isActiveMT and self._theming.surface0 or (isHoveringMT and self._theming.surface1 or self._theming.crust)
-                                self:_Draw(mtDrawId .. '_bg', 'rect', tabBg, 20, Vector2.new(tabX, mtY), Vector2.new(actualW, mtTabH), true)
-
-                                -- accent bar on active tab (bottom edge)
+                                -- tab background: active gets a gradient, inactive stays flat
                                 if isActiveMT then
-                                    self:_Draw(mtDrawId .. '_accent', 'rect', self._theming.accent, 22, Vector2.new(tabX, mtY + mtTabH - 2), Vector2.new(actualW, 2), true)
+                                    -- dim accent tint for active tab bg
+                                    local dimAccent = Color3.new(
+                                        self._theming.accent.R * 0.15,
+                                        self._theming.accent.G * 0.15,
+                                        self._theming.accent.B * 0.15
+                                    )
+                                    self:_Draw(mtDrawId .. '_bg', 'gradient', nil, 20, 'vertical', Vector2.new(tabX, mtY + 1), Vector2.new(actualW, mtTabH - 2), self._theming.surface0, dimAccent)
+                                else
+                                    local tabBg = isHoveringMT and self._theming.surface1 or self._theming.crust
+                                    self:_Draw(mtDrawId .. '_bg', 'rect', tabBg, 20, Vector2.new(tabX, mtY + 1), Vector2.new(actualW, mtTabH - 2), true)
+                                end
+
+                                -- accent bar on active tab (bottom edge, 2px)
+                                if isActiveMT then
+                                    local dimAccent2 = Color3.new(
+                                        self._theming.accent.R * 0.4,
+                                        self._theming.accent.G * 0.4,
+                                        self._theming.accent.B * 0.4
+                                    )
+                                    self:_Draw(mtDrawId .. '_accent', 'gradient', nil, 22, 'horizontal', Vector2.new(tabX + 2, mtY + mtTabH - 3), Vector2.new(actualW - 4, 2), dimAccent2, self._theming.accent)
                                 else
                                     self:_Undraw(mtDrawId .. '_accent')
                                 end
 
                                 -- separator line between tabs
                                 if mtIdx < tabCount then
-                                    self:_Draw(mtDrawId .. '_sep', 'rect', self._theming.border0, 21, Vector2.new(tabX + actualW, mtY + 2), Vector2.new(1, mtTabH - 4), true)
+                                    self:_Draw(mtDrawId .. '_sep', 'rect', self._theming.border0, 21, Vector2.new(tabX + actualW, mtY + 3), Vector2.new(1, mtTabH - 6), true)
                                 end
 
                                 -- centered tab label
                                 local mtLabelSize = self:_GetTextBounds(mtName)
                                 local labelX = tabX + math.floor((actualW - mtLabelSize.x) / 2)
-                                local labelY = mtY + math.floor((mtTabH - mtLabelSize.y) / 2)
-                                local mtColor = isActiveMT and self._theming.text or self._theming.subtext
-                                self:_Draw(mtDrawId .. '_label', 'text', mtColor, 22, Vector2.new(labelX, labelY), mtName, true)
+                                local labelY = mtY + math.floor((mtTabH - mtLabelSize.y) / 2) - 1
+                                local mtColor = isActiveMT and self._theming.accent or (isHoveringMT and self._theming.text or self._theming.subtext)
+                                self:_Draw(mtDrawId .. '_label', 'text', mtColor, 23, Vector2.new(labelX, labelY), mtName, true)
 
                                 if isHoveringMT and clickFrame then
                                     sectionContent._active_mini_tab = mtName
@@ -1013,7 +1031,7 @@ do
                             end
 
                             -- adjust section height to account for tab strip
-                            sectionHeight = sectionHeight + mtTabH - sectionTitleSize.y/2
+                            sectionHeight = sectionHeight + mtTabH - sectionTitleSize.y/2 + 2
                         else
                             self:_Draw(sectionDrawId .. '_title', 'text', self._theming.text, 20, sectionPos + Vector2.new(self._padding, -menuTitleSize.y/2), sectionName, true)
                         end
