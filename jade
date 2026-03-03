@@ -991,7 +991,7 @@ do
                             -- skip items not belonging to the active mini tab
                             if hasMiniTabs and sectionItem._mini_tab ~= sectionContent._active_mini_tab then
                                 self:_UndrawStartsWith(sectionDrawId .. '_item_' .. tostring(sectionItemIter))
-                                goto continue_item
+                                continue
                             end
                             local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
                             local sectionItemOrigin = Vector2.new(sectionPos.x + self._padding, sectionPos.y + sectionHeight)
@@ -1295,7 +1295,6 @@ do
                                 self:_Draw(sectionItemId .. '_body', 'rect', self._theming.crust, 21, textboxOrigin, textboxSize, true)
                                 sectionHeight = sectionHeight + textboxSize.y + self._padding
                             end
-                            ::continue_item::
                         end
 
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
@@ -1378,11 +1377,13 @@ do
     end
 
     function UILib:ShowDemoMenu()
-        self:SetMenuSize(Vector2.new(480, 500))
+        self:SetMenuSize(Vector2.new(520, 520))
         self:CenterMenu()
 
+        -- ── Playground Tab ────────────────────────────────────────────────
         local playground = self:Tab('Playground')
-        local el = playground:Section('Section 1')
+
+        local el = playground:Section('Elements')
         local toggleOne = el:Toggle('Toggle #1', false, nil, true, 'This feature has a tooltip, wow!')
         local key = toggleOne:AddKeybind()
         local toggleTwo = el:Toggle('Toggle #2', false)
@@ -1399,7 +1400,7 @@ do
             pickMe:Set({'1'})
         end)
 
-        local anims = playground:Section('Section 2')
+        local anims = playground:Section('Animations')
         local shouldAnimate = false
         local animToggle = anims:Toggle('Playing', shouldAnimate, function(newValue)
             shouldAnimate = newValue
@@ -1409,7 +1410,7 @@ do
             animToggle:Set(false)
         end)
 
-        -- tabbed section demo (mini tabs)
+        -- ── Tabbed Section demo (mini tabs) ───────────────────────────────
         local tabbedDemo = playground:TabbedSection({'Farming', 'Auto', 'Events'})
         tabbedDemo['Farming']:Toggle('Auto Farm', false)
         tabbedDemo['Farming']:Dropdown('Farm Mode', {'Nearest'}, {'Nearest', 'Furthest', 'Weakest'}, false)
@@ -1419,10 +1420,31 @@ do
         tabbedDemo['Events']:Toggle('Sea Events', false)
         tabbedDemo['Events']:Button('Force Join', function() end)
 
-        playground:Section('Section 4')
+        playground:Section('Empty Section')
 
+        -- ── Ordering demo ─────────────────────────────────────────────────
+        local orderTab = self:Tab('Ordering')
+        local orderA = orderTab:Section('Alpha')
+        orderA:Toggle('Alpha toggle', false)
+        orderA:Slider('Alpha slider', 50, 1, 0, 100, '%')
+
+        local orderB = orderTab:Section('Beta')
+        orderB:Toggle('Beta toggle', true)
+        orderB:Button('Beta button', function() end)
+
+        local orderC = orderTab:Section('Gamma')
+        orderC:Toggle('Gamma toggle', false)
+        orderC:Dropdown('Gamma pick', {'A'}, {'A', 'B', 'C'}, false)
+
+        -- reorder: Gamma first (left), Alpha second (right), Beta third (left)
+        orderTab:SetSectionOrder({'Gamma', 'Alpha', 'Beta'})
+
+        -- ── Extra tabs ────────────────────────────────────────────────────
         self:Tab('Another tab')
         self:Tab('Tabs')
+
+        -- reorder tabs: show Ordering first, then Playground, etc.
+        self:SetTabOrder({'Ordering', 'Playground', 'Another tab', 'Tabs'})
 
         local shouldDie = false
         local _, menuSettings = self:CreateSettingsTab()
