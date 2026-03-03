@@ -475,6 +475,23 @@ do
         }
     end
 
+    function UILib:_Label(tabName, sectionName, text, color, miniTab)
+        local itemId = #self._tree[tabName]._items[sectionName]._items + 1
+        local item = {
+            type_ = 'label', label = text, text_color = color,
+            _mini_tab = miniTab,
+        }
+        table.insert(self._tree[tabName]._items[sectionName]._items, item)
+        return {
+            SetText = function(_, newText)
+                self._tree[tabName]._items[sectionName]._items[itemId].label = newText
+            end,
+            SetTextColor = function(_, newColor)
+                self._tree[tabName]._items[sectionName]._items[itemId].text_color = newColor
+            end
+        }
+    end
+
     function UILib:_Section(tabName, sectionName)
         self._tree[tabName]._items[sectionName] = { _items = {} }
         table.insert(self._tree[tabName]._section_order, sectionName)
@@ -484,6 +501,7 @@ do
             Dropdown = function(_, ...) return self:_Dropdown(tabName, sectionName, ...) end,
             Button = function(_, ...) return self:_Button(tabName, sectionName, ...) end,
             Textbox = function(_, ...) return self:_Textbox(tabName, sectionName, ...) end,
+            Label = function(_, ...) return self:_Label(tabName, sectionName, ...) end,
         }
     end
 
@@ -513,6 +531,9 @@ do
                 end,
                 Textbox = function(_, label, value, callback)
                     return self:_Textbox(tabName, sectionName, label, value, callback, mtName)
+                end,
+                Label = function(_, text, color)
+                    return self:_Label(tabName, sectionName, text, color, mtName)
                 end,
             }
         end
@@ -1335,6 +1356,12 @@ do
                                 self:_Draw(sectionItemId .. '_input', 'text', valueColor, 22, textboxOrigin + Vector2.new(4, valueSize.y/2 - 2), displayedValue, true)
                                 self:_Draw(sectionItemId .. '_body', 'rect', self._theming.crust, 21, textboxOrigin, textboxSize, true)
                                 sectionHeight = sectionHeight + textboxSize.y + self._padding
+
+                            elseif itemType == 'label' then
+                                local labelColor = sectionItem.text_color or self._theming.subtext
+                                local labelSize = self:_GetTextBounds(sectionItem.label)
+                                self:_Draw(sectionItemId .. '_text', 'text', labelColor, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
+                                sectionHeight = sectionHeight + labelSize.y + self._padding
                             end
                         end
 
@@ -1418,52 +1445,87 @@ do
     end
 
     function UILib:ShowDemoMenu()
-        self:SetMenuSize(Vector2.new(520, 520))
+        self:SetMenuSize(Vector2.new(540, 540))
         self:CenterMenu()
 
-        -- ── Playground Tab ────────────────────────────────────────────────
-        local playground = self:Tab('Playground')
+        -- ── Elements Tab ──────────────────────────────────────────────────
+        local elementsTab = self:Tab('Elements')
 
-        local el = playground:Section('Elements')
-        local toggleOne = el:Toggle('Toggle #1', false, nil, true, 'This feature has a tooltip, wow!')
-        local key = toggleOne:AddKeybind()
-        local toggleTwo = el:Toggle('Toggle #2', false)
-        local color = toggleTwo:AddColorpicker('ESP Color')
-        el:Textbox('Hint', nil, nil)
-        local dragMe = el:Slider('Drag me', 10, 1, 1, 360, 'deg')
-        local pickMe = el:Dropdown('Pick me', {'1'}, {'1', '2', '3', '4', '5', 'verybigitem'}, false)
-        el:Button('Rollback', function()
-            toggleOne:Set(false)
+        -- Toggles section: shows all toggle variants
+        local toggles = elementsTab:Section('Toggles')
+        local togglePlain = toggles:Toggle('Basic toggle', false)
+        local toggleTip = toggles:Toggle('With tooltip', false, nil, false, 'Hover me for info!')
+        local toggleUnsafe = toggles:Toggle('Unsafe toggle', false, nil, true, 'This is dangerous!')
+        local toggleKey = toggles:Toggle('With keybind', false)
+        local key = toggleKey:AddKeybind()
+        local toggleColor = toggles:Toggle('With colorpicker', false)
+        local color = toggleColor:AddColorpicker('Pick Color')
+        local toggleOverwrite = toggles:Toggle('Overwrite colorpicker', false)
+        toggleOverwrite:AddColorpicker('Color', Color3.fromRGB(0, 200, 120), true)
+        local toggleCustom = toggles:Toggle('Custom text color', true)
+        toggleCustom:SetTextColor(Color3.fromRGB(255, 170, 50))
+
+        -- Inputs section: sliders, dropdowns, textbox, label
+        local inputs = elementsTab:Section('Inputs')
+        inputs:Label('-- Info Labels --')
+        local dragMe = inputs:Slider('Slider', 50, 1, 0, 100, '%')
+        local stepSlider = inputs:Slider('Step slider', 0, 5, -50, 50, ' units')
+        local pickSingle = inputs:Dropdown('Single select', {'Option A'}, {'Option A', 'Option B', 'Option C'}, false)
+        local pickMulti = inputs:Dropdown('Multi select', {'Red', 'Green'}, {'Red', 'Green', 'Blue', 'Yellow', 'Purple'}, true)
+        inputs:Textbox('Text input', nil, function(v) end)
+        inputs:Textbox('With default', 'Hello world', function(v) end)
+        inputs:Button('Reset all', function()
+            togglePlain:Set(false)
+            toggleTip:Set(false)
+            toggleUnsafe:Set(false)
+            toggleKey:Set(false)
             key:Set(nil, nil)
-            toggleTwo:Set()
+            toggleColor:Set(false)
             color:Set(Color3.fromRGB(255, 255, 255))
-            dragMe:Set(100)
-            pickMe:Set({'1'})
+            dragMe:Set(50)
+            stepSlider:Set(0)
+            pickSingle:Set({'Option A'})
+            pickMulti:Set({'Red', 'Green'})
         end)
 
-        local anims = playground:Section('Animations')
+        -- ── Animations Tab ────────────────────────────────────────────────
+        local animTab = self:Tab('Animations')
+
+        local anims = animTab:Section('Live Preview')
         local shouldAnimate = false
-        local animToggle = anims:Toggle('Playing', shouldAnimate, function(newValue)
-            shouldAnimate = newValue
-        end)
+        local animToggle = anims:Toggle('Playing', shouldAnimate, function(v) shouldAnimate = v end)
         local animSlider = anims:Slider('Meter', 0, 1, -100, 100, '%')
+        local statusLabel = anims:Label('Status: Stopped')
         anims:Button('Stop', function()
             animToggle:Set(false)
+            statusLabel:SetText('Status: Stopped')
         end)
 
-        -- ── Tabbed Section demo (mini tabs) ───────────────────────────────
-        local tabbedDemo = playground:TabbedSection({'Farming', 'Auto', 'Events'})
-        tabbedDemo['Farming']:Toggle('Auto Farm', false)
-        tabbedDemo['Farming']:Dropdown('Farm Mode', {'Nearest'}, {'Nearest', 'Furthest', 'Weakest'}, false)
-        tabbedDemo['Auto']:Toggle('Auto Chest', false)
-        tabbedDemo['Auto']:Toggle('Auto Quest', false)
-        tabbedDemo['Auto']:Slider('Speed', 100, 10, 0, 500, '%')
-        tabbedDemo['Events']:Toggle('Sea Events', false)
-        tabbedDemo['Events']:Button('Force Join', function() end)
+        local animInfo = animTab:Section('Info')
+        animInfo:Label('This tab shows live slider animation.')
+        animInfo:Label('Toggle "Playing" to start the demo.', Color3.fromRGB(0, 200, 120))
 
-        playground:Section('Empty Section')
+        -- ── Mini Tabs Tab ─────────────────────────────────────────────────
+        local miniTab = self:Tab('Mini Tabs')
 
-        -- ── Ordering demo ─────────────────────────────────────────────────
+        -- tabbed section with all element types inside
+        local tabbed = miniTab:TabbedSection({'Farming', 'Auto', 'Events'})
+        tabbed['Farming']:Label('Configure auto-farming below')
+        tabbed['Farming']:Toggle('Auto Farm', false)
+        tabbed['Farming']:Dropdown('Farm Mode', {'Nearest'}, {'Nearest', 'Furthest', 'Weakest'}, false)
+        tabbed['Farming']:Slider('Farm Radius', 50, 5, 10, 200, ' studs')
+        tabbed['Auto']:Toggle('Auto Chest', false)
+        tabbed['Auto']:Toggle('Auto Quest', false)
+        tabbed['Auto']:Slider('Speed', 100, 10, 0, 500, '%')
+        tabbed['Auto']:Textbox('Target NPC', nil, function(v) end)
+        tabbed['Events']:Toggle('Sea Events', false)
+        tabbed['Events']:Dropdown('Priority', {'High', 'Low'}, {'High', 'Medium', 'Low'}, true)
+        tabbed['Events']:Button('Force Join', function() end)
+
+        miniTab:Section('Below Tabs')
+        :Label('Sections work normally below tabbed sections.')
+
+        -- ── Ordering Tab ──────────────────────────────────────────────────
         local orderTab = self:Tab('Ordering')
         local orderA = orderTab:Section('Alpha')
         orderA:Toggle('Alpha toggle', false)
@@ -1477,15 +1539,11 @@ do
         orderC:Toggle('Gamma toggle', false)
         orderC:Dropdown('Gamma pick', {'A'}, {'A', 'B', 'C'}, false)
 
-        -- reorder: Gamma first (left), Alpha second (right), Beta third (left)
+        -- reorder: Gamma→Alpha→Beta
         orderTab:SetSectionOrder({'Gamma', 'Alpha', 'Beta'})
 
-        -- ── Extra tabs ────────────────────────────────────────────────────
-        self:Tab('Another tab')
-        self:Tab('Tabs')
-
-        -- reorder tabs: show Ordering first, then Playground, etc.
-        self:SetTabOrder({'Ordering', 'Playground', 'Another tab', 'Tabs'})
+        -- ── Tab order ─────────────────────────────────────────────────────
+        self:SetTabOrder({'Elements', 'Mini Tabs', 'Animations', 'Ordering'})
 
         local shouldDie = false
         local _, menuSettings = self:CreateSettingsTab()
@@ -1498,7 +1556,9 @@ do
 
         while not shouldDie do
             if shouldAnimate then
-                animSlider:Set(math.floor(math.sin(os.clock() * 10) * 100))
+                local val = math.floor(math.sin(os.clock() * 10) * 100)
+                animSlider:Set(val)
+                statusLabel:SetText('Status: ' .. tostring(val) .. '%')
             end
             self:Step()
         end
