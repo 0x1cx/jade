@@ -602,7 +602,7 @@ do
         end)
 
         local themingSection = settingsTab:Section('Theming')
-        local themes = {'Jade', 'Mid Jade', 'Light Jade', 'White Jade'}
+        local themes = {'Jade', 'Ruby', 'Amethyst', 'Gold', 'Sapphire', 'Obsidian'}
         local themingTextColor, themingBodyColor, themingAccentColor, themingSubtextColor, themingBorder0Color, themingBorder1Color, themingSurface0Color, themingSurface1Color, themingCrustColor
         local themingTheme = themingSection:Dropdown('Theme', themes[1], themes, false, function(newValue)
             if not newValue then return end
@@ -619,38 +619,60 @@ do
                 themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
                 themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
             elseif theme == themes[2] then
-                -- mid jade
-                themingAccentColor:Set(Color3.fromRGB(0, 200, 120))
-                themingBodyColor:Set(Color3.fromRGB(10, 10, 10))
+                -- ruby
+                themingAccentColor:Set(Color3.fromRGB(220, 20, 60))
+                themingBodyColor:Set(Color3.fromRGB(10, 5, 5))
                 themingTextColor:Set(Color3.fromRGB(210, 210, 210))
-                themingSubtextColor:Set(Color3.fromRGB(85, 85, 85))
-                themingBorder1Color:Set(Color3.fromRGB(35, 35, 35))
-                themingBorder0Color:Set(Color3.fromRGB(26, 26, 26))
-                themingSurface1Color:Set(Color3.fromRGB(24, 24, 24))
-                themingSurface0Color:Set(Color3.fromRGB(18, 18, 18))
-                themingCrustColor:Set(Color3.fromRGB(5, 5, 5))
+                themingSubtextColor:Set(Color3.fromRGB(85, 75, 75))
+                themingBorder1Color:Set(Color3.fromRGB(35, 25, 25))
+                themingBorder0Color:Set(Color3.fromRGB(26, 16, 16))
+                themingSurface1Color:Set(Color3.fromRGB(24, 14, 14))
+                themingSurface0Color:Set(Color3.fromRGB(18, 8, 8))
+                themingCrustColor:Set(Color3.fromRGB(5, 0, 0))
             elseif theme == themes[3] then
-                -- light jade
-                themingAccentColor:Set(Color3.fromRGB(0, 200, 120))
-                themingBodyColor:Set(Color3.fromRGB(20, 20, 20))
+                -- amethyst
+                themingAccentColor:Set(Color3.fromRGB(153, 102, 204))
+                themingBodyColor:Set(Color3.fromRGB(8, 5, 10))
                 themingTextColor:Set(Color3.fromRGB(210, 210, 210))
-                themingSubtextColor:Set(Color3.fromRGB(95, 95, 95))
-                themingBorder1Color:Set(Color3.fromRGB(45, 45, 45))
-                themingBorder0Color:Set(Color3.fromRGB(36, 36, 36))
-                themingSurface1Color:Set(Color3.fromRGB(34, 34, 34))
-                themingSurface0Color:Set(Color3.fromRGB(28, 28, 28))
-                themingCrustColor:Set(Color3.fromRGB(10, 10, 10))
+                themingSubtextColor:Set(Color3.fromRGB(80, 75, 85))
+                themingBorder1Color:Set(Color3.fromRGB(30, 25, 35))
+                themingBorder0Color:Set(Color3.fromRGB(21, 16, 26))
+                themingSurface1Color:Set(Color3.fromRGB(19, 14, 24))
+                themingSurface0Color:Set(Color3.fromRGB(13, 8, 18))
+                themingCrustColor:Set(Color3.fromRGB(3, 0, 5))
             elseif theme == themes[4] then
-                -- white jade
-                themingAccentColor:Set(Color3.fromRGB(0, 180, 100))
-                themingBodyColor:Set(Color3.fromRGB(255, 255, 255))
-                themingTextColor:Set(Color3.fromRGB(20, 20, 20))
-                themingSubtextColor:Set(Color3.fromRGB(150, 150, 150))
-                themingBorder1Color:Set(Color3.fromRGB(220, 220, 220))
-                themingBorder0Color:Set(Color3.fromRGB(200, 200, 200))
-                themingSurface1Color:Set(Color3.fromRGB(245, 245, 245))
-                themingSurface0Color:Set(Color3.fromRGB(235, 235, 235))
-                themingCrustColor:Set(Color3.fromRGB(210, 210, 210))
+                -- gold
+                themingAccentColor:Set(Color3.fromRGB(255, 200, 50))
+                themingBodyColor:Set(Color3.fromRGB(10, 10, 5))
+                themingTextColor:Set(Color3.fromRGB(210, 210, 210))
+                themingSubtextColor:Set(Color3.fromRGB(85, 85, 75))
+                themingBorder1Color:Set(Color3.fromRGB(35, 35, 25))
+                themingBorder0Color:Set(Color3.fromRGB(26, 26, 16))
+                themingSurface1Color:Set(Color3.fromRGB(24, 24, 14))
+                themingSurface0Color:Set(Color3.fromRGB(18, 18, 8))
+                themingCrustColor:Set(Color3.fromRGB(5, 5, 0))
+            elseif theme == themes[5] then
+                -- sapphire
+                themingAccentColor:Set(Color3.fromRGB(15, 82, 186))
+                themingBodyColor:Set(Color3.fromRGB(5, 5, 12))
+                themingTextColor:Set(Color3.fromRGB(210, 210, 210))
+                themingSubtextColor:Set(Color3.fromRGB(75, 75, 86))
+                themingBorder1Color:Set(Color3.fromRGB(25, 25, 37))
+                themingBorder0Color:Set(Color3.fromRGB(16, 16, 28))
+                themingSurface1Color:Set(Color3.fromRGB(14, 14, 26))
+                themingSurface0Color:Set(Color3.fromRGB(8, 8, 20))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 6))
+            elseif theme == themes[6] then
+                -- obsidian
+                themingAccentColor:Set(Color3.fromRGB(80, 80, 80))
+                themingBodyColor:Set(Color3.fromRGB(4, 4, 4))
+                themingTextColor:Set(Color3.fromRGB(180, 180, 180))
+                themingSubtextColor:Set(Color3.fromRGB(60, 60, 60))
+                themingBorder1Color:Set(Color3.fromRGB(20, 20, 20))
+                themingBorder0Color:Set(Color3.fromRGB(12, 12, 12))
+                themingSurface1Color:Set(Color3.fromRGB(10, 10, 10))
+                themingSurface0Color:Set(Color3.fromRGB(6, 6, 6))
+                themingCrustColor:Set(Color3.fromRGB(2, 2, 2))
             end
         end)
 
@@ -1439,8 +1461,6 @@ do
         local key = toggleKey:AddKeybind()
         local toggleColor = toggles:Toggle('With colorpicker', false)
         local color = toggleColor:AddColorpicker('Pick Color')
-        local toggleOverwrite = toggles:Toggle('Overwrite colorpicker', false)
-        toggleOverwrite:AddColorpicker('Color', Color3.fromRGB(0, 200, 120), true)
         local toggleCustom = toggles:Toggle('Custom text color', true)
         toggleCustom:SetTextColor(Color3.fromRGB(255, 170, 50))
 
