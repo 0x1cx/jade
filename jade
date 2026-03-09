@@ -2,9 +2,7 @@
 
     jade ui library
     forked from nulare's library
-    by @scxllc on discord
 
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/scxllc/jade/main/jade.lua'))()
 
 ]]
 
@@ -693,6 +691,7 @@ do
     end
 
     function UILib:Step()
+        self:_UpdateMousePos()
         local menuTitle = self._custom_title_enabled and self._custom_title or self.title
         local hoveredTooltip = nil
         local windowActive = isrbxactive()
