@@ -549,6 +549,7 @@ do
     function UILib:GetMenuSize() return Vector2.new(self.w, self.h) end
     function UILib:SetWatermarkEnabled(value) self._watermark_enabled = value end
     function UILib:SetMenuTitle(newTitle) self.title = newTitle end
+    function UILib:SetWatermarkTitle(newTitle) self._custom_watermark = newTitle end
     function UILib:SetMenuPosition(newPos) self.x = newPos.x or self.x; self.y = newPos.y or self.y end
     function UILib:SetMenuSize(newSize) self.w = newSize.x or self.x; self.h = newSize.y or self.y end
 
@@ -937,7 +938,7 @@ do
     end
 
     function UILib:Step()
-        local menuTitle = self._custom_title_enabled and self._custom_title or self.title
+        local menuTitle = self.title
         local hoveredTooltip = nil
         local windowActive = isrbxactive()
 
@@ -1001,7 +1002,7 @@ do
         end
 
         local watermarkPos = Vector2.new(20, 20)
-        local watermarkContent = self._custom_title_enabled and self._custom_title or self.title
+        local watermarkContent = self._custom_watermark or self.title
         local watermarkStates = {watermarkContent}
         for _, activity in ipairs(self._activities) do
             if type(activity) == 'function' then
@@ -1306,13 +1307,13 @@ do
                                 local tickSize = Vector2.new(self._font_size, self._font_size)
                                 local itemKeybind = sectionItem.keybind
                                 local itemColorpicker = sectionItem.colorpicker
-                                if itemKeybind then
-                                    local keybindText = '[' .. (itemKeybind._listening and '...' or ((itemKeybind.value or '-'):upper())) .. ']'
-                                    local keybindLabelSize = self:_GetTextBounds(keybindText, nil, 10)
-                                    local keybindSize = Vector2.new(keybindLabelSize.x - 2, tickSize.y)
-                                    local keybindOrigin = sectionItemOrigin + Vector2.new(sectionWidth - keybindSize.x - self._padding * 2, 2)
-                                    local isHoveringKeybind = self:_IsMouseWithinBounds(keybindOrigin, keybindSize)
-                                    if isHoveringKeybind then
+                                    if itemKeybind then
+                                        local keybindText = '[' .. (itemKeybind._listening and '...' or ((itemKeybind.value or '-'):upper())) .. ']'
+                                        local keybindLabelSize = self:_GetTextBounds(keybindText, Drawing.Fonts.UI, 10)
+                                        local keybindSize = Vector2.new(keybindLabelSize.x - 2, tickSize.y)
+                                        local keybindOrigin = sectionItemOrigin + Vector2.new(sectionWidth - keybindSize.x - self._padding * 2, 2)
+                                        local isHoveringKeybind = self:_IsMouseWithinBounds(keybindOrigin, keybindSize)
+                                        if isHoveringKeybind then
                                         if clickFrame then
                                             itemKeybind._listening = true
                                             itemKeybind._listening_start = os.clock()
@@ -1339,7 +1340,7 @@ do
                                     end
 
                                     local keybindColor = itemKeybind.value and self._theming.text or self._theming.subtext
-                                    self:_Draw(sectionItemId .. '_keybind', 'text', keybindColor, 20, keybindOrigin, keybindText, true, 'left', 10)
+                                    self:_Draw(sectionItemId .. '_keybind', 'text', keybindColor, 20, keybindOrigin, keybindText, true, 'left', 10, Drawing.Fonts.UI)
                                 elseif itemColorpicker then
                                     local colorpickerSize = Vector2.new(tickSize.x * 2, tickSize.y)
                                     local colorpickerOrigin = sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - colorpickerSize.x)
@@ -1395,7 +1396,7 @@ do
                                 local labelPosition = sectionItemOrigin + Vector2.new(tickSize.x + self._padding, 0)
 
                                 if sectionItem.tooltip then
-                                    local hintSize = self:_GetTextBounds('(?)', nil, 10)
+                                    local hintSize = self:_GetTextBounds('(?)', Drawing.Fonts.UI, 10)
                                     local hintPosition = labelPosition + Vector2.new(labelSize.x + hintSize.x - 4, hintSize.y / 2)
                                     local isHoveringHint = self:_IsMouseWithinBounds(hintPosition - Vector2.new(3, 3), hintSize + Vector2.new(6, 6))
 
@@ -1403,7 +1404,7 @@ do
                                         hoveredTooltip = sectionItem.tooltip
                                     end
 
-                                    self:_Draw(sectionItemId .. '_hint', 'text', self._theming.subtext, 21, hintPosition, '(?)', true, 'center', 10)
+                                    self:_Draw(sectionItemId .. '_hint', 'text', self._theming.subtext, 21, hintPosition, '(?)', true, 'center', 10, Drawing.Fonts.UI)
                                 end
                                 self:_Draw(sectionItemId .. '_label', 'text', labelColor, 20, labelPosition, sectionItem.label, true)
                                 sectionHeight = sectionHeight + self._font_size + self._padding
@@ -1461,8 +1462,8 @@ do
                                     self:_Draw(sectionItemId .. '_thumb', 'rect', self._theming.accent, 23, Vector2.new(thumbX - 1, thumbY), Vector2.new(2, thumbH), true)
                                 end
                                 local displayedValue = tostring(itemValue) .. sectionItem.suffix
-                                local valueTextSize = self:_GetTextBounds(displayedValue, nil, 11)
-                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.accent, 22, sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - valueTextSize.x, 0), displayedValue, true, nil, 11)
+                                local valueTextSize = self:_GetTextBounds(displayedValue, Drawing.Fonts.UI, 11)
+                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.accent, 22, sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - valueTextSize.x, 0), displayedValue, true, nil, 11, Drawing.Fonts.UI)
                                 self:_Draw(sectionItemId .. '_label', 'text', sectionItem.text_color or self._theming.text, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + sliderSize.y + self._padding * 3
 
