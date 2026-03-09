@@ -746,13 +746,34 @@ do
             self:Notification("Config list refreshed", 3)
         end)
 
+        local ok, autoloadContent = pcall(readfile, "Jade/Configs/autoload.txt")
+        local autoloadStr = (ok and type(autoloadContent) == "string") and autoloadContent or ""
+
+        configSection:Toggle('Auto-Load Selected', autoloadStr == self._config_name and autoloadStr ~= "", function(newValue)
+            pcall(makefolder, "Jade")
+            pcall(makefolder, "Jade/Configs")
+            if newValue then
+                pcall(writefile, "Jade/Configs/autoload.txt", self._config_name)
+                self:Notification("Auto-load set to " .. self._config_name, 3)
+            else
+                pcall(writefile, "Jade/Configs/autoload.txt", "")
+                self:Notification("Auto-load disabled", 3)
+            end
+        end)
+
+        if autoloadStr ~= "" then
+            task.spawn(function()
+                task.wait(1)
+                self:LoadConfig(autoloadStr)
+            end)
+        end
+
         return settingsTab, menuSection, themingSection, configSection
     end
 
     function UILib:GetConfigData()
         local data = {}
         for tabName, tabContent in pairs(self._tree) do
-            if tabName == 'Menu' then continue end
             data[tabName] = {}
             for _, sectionName in ipairs(tabContent._section_order) do
                 local sectionContent = tabContent._items[sectionName]
