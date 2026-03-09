@@ -698,15 +698,52 @@ do
         themingTheme:Set({'Jade'})
 
         local configSection = settingsTab:Section('Config')
-        self._config_name = 'default'
-        configSection:Textbox('Config Name', self._config_name, function(newValue)
-            self._config_name = newValue
+        
+        local function GetConfigs()
+            local success, files = pcall(listfiles, "Jade/Configs")
+            local configs = {}
+            if success and type(files) == "table" then
+                for _, file in ipairs(files) do
+                    local name = file:match("([^/\\]+)%.json$")
+                    if name then table.insert(configs, name) end
+                end
+            end
+            if #configs == 0 then table.insert(configs, "default") end
+            return configs
+        end
+
+        local savedConfigs = GetConfigs()
+        self._config_name = savedConfigs[1]
+
+        local configDropdown = configSection:Dropdown('Select Config', {self._config_name}, savedConfigs, false, function(newValue)
+            if newValue and newValue[1] then
+                self._config_name = newValue[1]
+            end
         end)
+
+        configSection:Button('Load Selected', function()
+            self:LoadConfig(self._config_name)
+        end)
+
+        configSection:Textbox('New Config Name', '', function(newValue)
+            if newValue ~= '' then self._config_name = newValue end
+        end)
+
         configSection:Button('Save Config', function()
             self:SaveConfig(self._config_name)
+            local newConfigs = GetConfigs()
+            configDropdown:UpdateChoices(newConfigs)
+            configDropdown:Set({self._config_name})
         end)
-        configSection:Button('Load Config', function()
-            self:LoadConfig(self._config_name)
+
+        configSection:Button('Refresh List', function()
+            local newConfigs = GetConfigs()
+            configDropdown:UpdateChoices(newConfigs)
+            if not table.find(newConfigs, self._config_name) then
+                self._config_name = newConfigs[1]
+                configDropdown:Set({self._config_name})
+            end
+            self:Notification("Config list refreshed", 3)
         end)
 
         return settingsTab, menuSection, themingSection, configSection
