@@ -27,6 +27,7 @@ UILib = {
     _menu_key = 'f1',
     _active_dropdown = nil,
     _active_colorpicker = nil,
+    _dropdown_scroll_drag = nil,
     _copied_color = nil,
     _tooltip_hover_time = nil,
     _tooltip_mouse_prev = nil,
@@ -333,13 +334,14 @@ do
         local item = {
             position = position, width = width, value = value,
             choices = choices, multi = multi, callback = callback, _spawned_at = os.clock(),
-            _source_id = sourceId
+            _source_id = sourceId, _scroll_offset = 0, _max_visible = 15
         }
         self._active_dropdown = item
     end
 
     function UILib:_RemoveDropdown()
         self._active_dropdown = nil
+        self._dropdown_scroll_drag = nil
         self:_UndrawStartsWith('dropdown_')
     end
 
@@ -1040,13 +1042,23 @@ do
                 if dropdownFade < 1.1 then self:_SetOpacityStartsWith('dropdown_', clamp(dropdownFade, 0, 1)) end
                 local shouldCancel = true
                 local dropdownOrigin = dropdown.position
+                local totalChoices = #dropdown.choices
+                local maxVis = dropdown._max_visible or 15
+                local offset = dropdown._scroll_offset or 0
+                local visibleCount = math.min(maxVis, totalChoices - offset)
                 local totalHeight = self._padding
-                for i = 1, #dropdown.choices do
+
+                local needsScroll = totalChoices > maxVis
+                local scrollBarW = needsScroll and 6 or 0
+                local choiceAreaW = dropdown.width - scrollBarW
+
+                for vi = 1, visibleCount do
+                    local i = vi + offset
                     local choice = dropdown.choices[i]
                     local choiceFoundIndex = table.find(dropdown.value, choice)
                     local labelSize = self:_GetTextBounds(choice)
                     local choiceOrigin = Vector2.new(dropdownOrigin.x + self._padding, dropdownOrigin.y + totalHeight)
-                    local choiceSize = Vector2.new(dropdown.width, labelSize.y)
+                    local choiceSize = Vector2.new(choiceAreaW - self._padding, labelSize.y)
                     local isHoveringChoice = self:_IsMouseWithinBounds(choiceOrigin, choiceSize)
                     if isHoveringChoice and clickFrame then
                         shouldCancel = not dropdown.multi
@@ -1060,13 +1072,62 @@ do
                     end
                     local choiceColor = choiceFoundIndex and self._theming.accent or (isHoveringChoice and self._theming.text or self._theming.subtext)
                     if isHoveringChoice then
-                        self:_Draw('dropdown_choice_bg_' .. tostring(i), 'rect', self._theming.surface1, 101, Vector2.new(dropdownOrigin.x + 2, choiceOrigin.y - 1), Vector2.new(dropdown.width - 4, labelSize.y + 2), true)
+                        self:_Draw('dropdown_choice_bg_' .. tostring(vi), 'rect', self._theming.surface1, 101, Vector2.new(dropdownOrigin.x + 2, choiceOrigin.y - 1), Vector2.new(choiceAreaW - 4, labelSize.y + 2), true)
                     else
-                        self:_Undraw('dropdown_choice_bg_' .. tostring(i))
+                        self:_Undraw('dropdown_choice_bg_' .. tostring(vi))
                     end
-                    self:_Draw('dropdown_choice_' .. tostring(i), 'text', choiceColor, 102, choiceOrigin, choice, true)
+                    self:_Draw('dropdown_choice_' .. tostring(vi), 'text', choiceColor, 102, choiceOrigin, choice, true)
                     totalHeight = totalHeight + labelSize.y + self._padding
                 end
+
+                for ci = visibleCount + 1, maxVis + 5 do
+                    self:_Undraw('dropdown_choice_bg_' .. tostring(ci))
+                    self:_Undraw('dropdown_choice_' .. tostring(ci))
+                end
+
+                if needsScroll then
+                    local trackX = dropdownOrigin.x + dropdown.width - scrollBarW - 1
+                    local trackY = dropdownOrigin.y + self._padding
+                    local trackH = totalHeight - self._padding
+                    local thumbRatio = maxVis / totalChoices
+                    local thumbH = math.max(12, math.floor(trackH * thumbRatio))
+                    local scrollRange = totalChoices - maxVis
+                    local thumbY = trackY + math.floor((trackH - thumbH) * (offset / scrollRange))
+
+                    self:_Draw('dropdown_scroll_track', 'rect', self._theming.border0, 103,
+                        Vector2.new(trackX, trackY), Vector2.new(scrollBarW, trackH), true)
+                    local isHoveringThumb = self:_IsMouseWithinBounds(Vector2.new(trackX - 2, thumbY), Vector2.new(scrollBarW + 4, thumbH))
+                    local isHoveringTrack = self:_IsMouseWithinBounds(Vector2.new(trackX - 2, trackY), Vector2.new(scrollBarW + 4, trackH))
+                    local thumbColor = (isHoveringThumb or self._dropdown_scroll_drag) and self._theming.accent or self._theming.subtext
+                    self:_Draw('dropdown_scroll_thumb', 'rect', thumbColor, 104,
+                        Vector2.new(trackX + 1, thumbY), Vector2.new(scrollBarW - 2, thumbH), true)
+
+                    if mouseHeld and self._dropdown_scroll_drag then
+                        local mouseY = self:_GetMousePos().y
+                        local relY = mouseY - trackY - self._dropdown_scroll_drag
+                        local pct = clamp(relY / (trackH - thumbH), 0, 1)
+                        dropdown._scroll_offset = math.floor(pct * scrollRange + 0.5)
+                        shouldCancel = false
+                    elseif clickFrame and isHoveringThumb then
+                        self._dropdown_scroll_drag = self:_GetMousePos().y - thumbY
+                        shouldCancel = false
+                        clickFrame = false
+                    elseif clickFrame and isHoveringTrack then
+                        local mouseY = self:_GetMousePos().y
+                        local pct = clamp((mouseY - trackY - thumbH / 2) / (trackH - thumbH), 0, 1)
+                        dropdown._scroll_offset = math.floor(pct * scrollRange + 0.5)
+                        shouldCancel = false
+                        clickFrame = false
+                    end
+                    if not mouseHeld then
+                        self._dropdown_scroll_drag = nil
+                    end
+                else
+                    self:_Undraw('dropdown_scroll_track')
+                    self:_Undraw('dropdown_scroll_thumb')
+                    self._dropdown_scroll_drag = nil
+                end
+
                 self:_Draw('dropdown_crust', 'rect', self._theming.crust, 100, dropdownOrigin, Vector2.new(dropdown.width, totalHeight), false)
                 self:_Draw('dropdown_body', 'rect', self._theming.surface0, 101, dropdownOrigin + Vector2.new(1, 1), Vector2.new(dropdown.width - 2, totalHeight - 2), true)
                 if clickFrame and shouldCancel then self:_RemoveDropdown() end
