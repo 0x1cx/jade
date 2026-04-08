@@ -4,7 +4,7 @@
 ## Quick Start
 
 ```lua
-loadstring(game:HttpGet('https://raw.githubusercontent.com/scxllc/jade/refs/heads/main/jade'))()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/0x1cx/jade/refs/heads/main/jade'))()
 UILib:ShowDemoMenu()
 ```
 
@@ -398,7 +398,7 @@ label:SetText("Status: Running...")
 ## Full Example
 
 ```lua
-loadstring(game:HttpGet('https://raw.githubusercontent.com/scxllc/jade/refs/heads/main/jade'))()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/0x1cx/jade/refs/heads/main/jade'))()
 
 UILib:SetMenuTitle("My Script")
 UILib:SetMenuSize(Vector2.new(500, 400))
