@@ -218,7 +218,7 @@ end)
 ---
 
 ### `Section:Dropdown(label, value, choices, multi, callback) -> DropdownItem`
-Adds a dropdown selector.
+Adds a dropdown selector. Dropdowns with more than 15 choices automatically show a draggable scrollbar on the right side. Click the track to jump, or drag the thumb to scroll. Dropdowns with 15 or fewer choices behave normally with no scroll UI.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
