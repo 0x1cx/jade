@@ -28,6 +28,8 @@ UILib = {
     _active_dropdown = nil,
     _active_colorpicker = nil,
     _dropdown_scroll_drag = nil,
+    _section_scroll_drag = nil,
+    _section_scroll_drag_offset = nil,
     _copied_color = nil,
     _tooltip_hover_time = nil,
     _tooltip_mouse_prev = nil,
@@ -501,8 +503,8 @@ do
         }
     end
 
-    function UILib:_Section(tabName, sectionName)
-        self._tree[tabName]._items[sectionName] = { _items = {} }
+    function UILib:_Section(tabName, sectionName, maxVisible)
+        self._tree[tabName]._items[sectionName] = { _items = {}, _max_visible = maxVisible, _scroll_offset = 0 }
         table.insert(self._tree[tabName]._section_order, sectionName)
         return {
             Toggle = function(_, ...) return self:_Toggle(tabName, sectionName, ...) end,
@@ -576,7 +578,7 @@ do
         table.insert(self._tab_order, tabName)
         if not self._open_tab then self._open_tab = tabName end
         return {
-            Section = function(_, sectionName) return self:_Section(tabName, sectionName) end,
+            Section = function(_, sectionName, maxVisible) return self:_Section(tabName, sectionName, maxVisible) end,
             TabbedSection = function(_, miniTabNames) return self:_TabbedSection(tabName, miniTabNames) end,
             SetSectionOrder = function(_, order) self._tree[tabName]._section_order = order end,
         }
@@ -1332,9 +1334,27 @@ do
                             sectionContent._prev_mini_tab = sectionContent._active_mini_tab
                         end
 
+                        local secMaxVis = sectionContent._max_visible
+                        local secOffset = sectionContent._scroll_offset or 0
+                        local secIdx = 0
+                        local secTotal = 0
+                        if secMaxVis then
+                            for _, si in ipairs(sectionContent._items) do
+                                if not hasMiniTabs or si._mini_tab == sectionContent._active_mini_tab then
+                                    secTotal = secTotal + 1
+                                end
+                            end
+                            secOffset = math.min(secOffset, math.max(0, secTotal - secMaxVis))
+                            sectionContent._scroll_offset = secOffset
+                        end
+                        local secNeedsScroll = secMaxVis and secTotal > secMaxVis
+
                         for sectionItemIter, sectionItem in ipairs(sectionContent._items) do
                             if not hasMiniTabs or sectionItem._mini_tab == sectionContent._active_mini_tab then
                             local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
+                            secIdx = secIdx + 1
+                            local secInRange = not secMaxVis or (secIdx > secOffset and secIdx <= secOffset + secMaxVis)
+                            if not secInRange then self:_UndrawStartsWith(sectionItemId) else
                             local sectionItemOrigin = Vector2.new(sectionPos.x + self._padding, sectionPos.y + sectionHeight)
                             local itemType = sectionItem.type_
                             local itemValue = sectionItem.value
@@ -1628,10 +1648,60 @@ do
                             elseif itemType == 'label' then
                                 local labelColor = sectionItem.text_color or self._theming.subtext
                                 local labelSize = self:_GetTextBounds(sectionItem.label)
+                                local isHoveringLabel = self:_IsMouseWithinBounds(sectionItemOrigin, Vector2.new(sectionWidth - self._padding * 2, labelSize.y))
+                                if ctxFrame and isHoveringLabel and sectionItem.label ~= '' then
+                                    setclipboard(sectionItem.label)
+                                    self:Notification('Copied!', 2)
+                                    ctxFrame = false
+                                end
                                 self:_Draw(sectionItemId .. '_text', 'text', labelColor, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + self._padding
                             end
+                            end -- secInRange
                             end
+                        end
+
+                        -- section scrollbar
+                        if secNeedsScroll then
+                            local secScrollBarW = 6
+                            local trackX = sectionPos.x + sectionWidth - secScrollBarW - 2
+                            local trackY = sectionPos.y + self._padding
+                            local trackH = sectionHeight - self._padding
+                            if trackH > 20 then
+                                local thumbRatio = secMaxVis / secTotal
+                                local thumbH = math.max(12, math.floor(trackH * thumbRatio))
+                                local scrollRange = math.max(1, secTotal - secMaxVis)
+                                local thumbY = trackY + math.floor((trackH - thumbH) * (secOffset / scrollRange))
+                                local dragKey = sectionDrawId .. '_scroll'
+                                self:_Draw(sectionDrawId .. '_scroll_track', 'rect', self._theming.border0, 25,
+                                    Vector2.new(trackX, trackY), Vector2.new(secScrollBarW, trackH), true)
+                                local isHoveringThumb = self:_IsMouseWithinBounds(Vector2.new(trackX - 2, thumbY), Vector2.new(secScrollBarW + 4, thumbH))
+                                local isHoveringTrack = self:_IsMouseWithinBounds(Vector2.new(trackX - 2, trackY), Vector2.new(secScrollBarW + 4, trackH))
+                                local thumbColor = (isHoveringThumb or self._section_scroll_drag == dragKey) and self._theming.accent or self._theming.subtext
+                                self:_Draw(sectionDrawId .. '_scroll_thumb', 'rect', thumbColor, 26,
+                                    Vector2.new(trackX + 1, thumbY), Vector2.new(secScrollBarW - 2, thumbH), true)
+                                if mouseHeld and self._section_scroll_drag == dragKey then
+                                    local mouseY = self:_GetMousePos().y
+                                    local relY = mouseY - trackY - self._section_scroll_drag_offset
+                                    local pct = clamp(relY / (trackH - thumbH), 0, 1)
+                                    sectionContent._scroll_offset = math.floor(pct * scrollRange + 0.5)
+                                elseif clickFrame and isHoveringThumb then
+                                    self._section_scroll_drag = dragKey
+                                    self._section_scroll_drag_offset = self:_GetMousePos().y - thumbY
+                                    clickFrame = false
+                                elseif clickFrame and isHoveringTrack then
+                                    local mouseY = self:_GetMousePos().y
+                                    local pct = clamp((mouseY - trackY - thumbH / 2) / (trackH - thumbH), 0, 1)
+                                    sectionContent._scroll_offset = math.floor(pct * scrollRange + 0.5)
+                                    clickFrame = false
+                                end
+                                if not mouseHeld and self._section_scroll_drag == dragKey then
+                                    self._section_scroll_drag = nil
+                                end
+                            end
+                        else
+                            self:_Undraw(sectionDrawId .. '_scroll_track')
+                            self:_Undraw(sectionDrawId .. '_scroll_thumb')
                         end
 
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
