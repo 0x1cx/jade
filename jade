@@ -1706,7 +1706,7 @@ do
 
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
                         else totalSectionHeightL = totalSectionHeightL + sectionHeight + sectionTitleSize.y/2 end
-                        if isLastSection then
+                        if isLastSection and not secMaxVis then
                             if isSectionMirror then sectionHeight = bodyContentSize.y - totalSectionHeightR + sectionHeight - self._padding
                             else sectionHeight = bodyContentSize.y - totalSectionHeightL + sectionHeight - self._padding end
                         end
