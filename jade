@@ -1348,13 +1348,17 @@ do
                             sectionContent._scroll_offset = secOffset
                         end
                         local secNeedsScroll = secMaxVis and secTotal > secMaxVis
+                        local secScrollChanged = secMaxVis and sectionContent._prev_scroll_offset ~= secOffset
+                        if secScrollChanged then
+                            sectionContent._prev_scroll_offset = secOffset
+                        end
 
                         for sectionItemIter, sectionItem in ipairs(sectionContent._items) do
                             if not hasMiniTabs or sectionItem._mini_tab == sectionContent._active_mini_tab then
                             local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
                             secIdx = secIdx + 1
                             local secInRange = not secMaxVis or (secIdx > secOffset and secIdx <= secOffset + secMaxVis)
-                            if not secInRange then self:_UndrawStartsWith(sectionItemId) else
+                            if not secInRange then if secScrollChanged then self:_UndrawStartsWith(sectionItemId) end else
                             local sectionItemOrigin = Vector2.new(sectionPos.x + self._padding, sectionPos.y + sectionHeight)
                             local itemType = sectionItem.type_
                             local itemValue = sectionItem.value
