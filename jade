@@ -503,6 +503,9 @@ do
                 local items = self._tree[tabName]._items[sectionName]._items
                 for i, v in ipairs(items) do
                     if v == item then
+                        if item._drawId then
+                            self:_RemoveDrawStartsWith(item._drawId)
+                        end
                         table.remove(items, i)
                         self._tree[tabName]._items[sectionName]._dirty = true
                         break
@@ -1370,6 +1373,7 @@ do
                         for sectionItemIter, sectionItem in ipairs(sectionContent._items) do
                             if not hasMiniTabs or sectionItem._mini_tab == sectionContent._active_mini_tab then
                             local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
+                            sectionItem._drawId = sectionItemId
                             secIdx = secIdx + 1
                             local secInRange = not secMaxVis or (secIdx > secOffset and secIdx <= secOffset + secMaxVis)
                             if not secInRange then if secScrollChanged then self:_UndrawStartsWith(sectionItemId) end else
