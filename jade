@@ -487,7 +487,6 @@ do
 
     function UILib:_Label(tabName, sectionName, text, color, miniTab)
         local sectionContent = self._tree[tabName]._items[sectionName]
-        local itemId = #sectionContent._items + 1
         local item = {
             type_ = 'label', label = text, text_color = color,
             _mini_tab = miniTab,
@@ -495,10 +494,19 @@ do
         table.insert(sectionContent._items, item)
         return {
             SetText = function(_, newText)
-                self._tree[tabName]._items[sectionName]._items[itemId].label = newText
+                item.label = newText
             end,
             SetTextColor = function(_, newColor)
-                self._tree[tabName]._items[sectionName]._items[itemId].text_color = newColor
+                item.text_color = newColor
+            end,
+            Remove = function(_)
+                local items = self._tree[tabName]._items[sectionName]._items
+                for i, v in ipairs(items) do
+                    if v == item then
+                        table.remove(items, i)
+                        break
+                    end
+                end
             end
         }
     end
