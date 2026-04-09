@@ -504,6 +504,7 @@ do
                 for i, v in ipairs(items) do
                     if v == item then
                         table.remove(items, i)
+                        self._tree[tabName]._items[sectionName]._dirty = true
                         break
                     end
                 end
@@ -1340,6 +1341,11 @@ do
                                 end
                             end
                             sectionContent._prev_mini_tab = sectionContent._active_mini_tab
+                        end
+
+                        if sectionContent._dirty then
+                            self:_UndrawStartsWith(sectionDrawId .. '_item_')
+                            sectionContent._dirty = false
                         end
 
                         local secMaxVis = sectionContent._max_visible
