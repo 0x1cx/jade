@@ -282,6 +282,7 @@ do
     function UILib:_RemoveDraw(drawId)
         local drawObject = self._drawings[drawId]
         if drawObject then drawObject:Remove() end
+        self._drawings[drawId] = nil
     end
 
     function UILib:_Undraw(drawId)
