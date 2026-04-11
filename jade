@@ -36,6 +36,7 @@ UILib = {
     _activities = {},
 
     title = 'jade',
+    _config_folder = 'Jade/Configs',
     _custom_title_enabled = false,
     _custom_title = '',
     w = 480,
@@ -570,6 +571,10 @@ do
     function UILib:SetMenuPosition(newPos) self.x = newPos.x or self.x; self.y = newPos.y or self.y end
     function UILib:SetMenuSize(newSize) self.w = newSize.x or self.x; self.h = newSize.y or self.y end
 
+    function UILib:SetConfigFolder(folder)
+        self._config_folder = 'Jade/Configs/' .. folder
+    end
+
     function UILib:CenterMenu()
         local screenSize = self:_GetScreenSize()
         local menuSize = self:GetMenuSize()
@@ -711,7 +716,7 @@ do
         local configSection = settingsTab:Section('Config')
         
         local function GetConfigs()
-            local success, files = pcall(listfiles, "Jade/Configs")
+            local success, files = pcall(listfiles, self._config_folder)
             local configs = {}
             if success and type(files) == "table" then
                 for _, file in ipairs(files) do
@@ -765,7 +770,7 @@ do
             local removedCount = 0
             for _, configName in ipairs(_delete_targets) do
                 local safeName = string.gsub(configName, "[^%w%s]", "")
-                local path = "Jade/Configs/" .. safeName .. ".json"
+                local path = self._config_folder .. "/" .. safeName .. ".json"
                 local success, err = pcall(delfile, path)
                 if success then removedCount = removedCount + 1 end
             end
@@ -796,17 +801,17 @@ do
             self:Notification("Config list refreshed", 3)
         end)
 
-        local ok, autoloadContent = pcall(readfile, "Jade/Configs/autoload.txt")
+        local ok, autoloadContent = pcall(readfile, self._config_folder .. "/autoload.txt")
         local autoloadStr = (ok and type(autoloadContent) == "string") and autoloadContent or ""
 
         configSection:Toggle('Auto-Load Selected', autoloadStr == self._config_name and autoloadStr ~= "", function(newValue)
             pcall(makefolder, "Jade")
-            pcall(makefolder, "Jade/Configs")
+            pcall(makefolder, self._config_folder)
             if newValue then
-                pcall(writefile, "Jade/Configs/autoload.txt", self._config_name)
+                pcall(writefile, self._config_folder .. "/autoload.txt", self._config_name)
                 self:Notification("Auto-load set to " .. self._config_name, 3)
             else
-                pcall(writefile, "Jade/Configs/autoload.txt", "")
+                pcall(writefile, self._config_folder .. "/autoload.txt", "")
                 self:Notification("Auto-load disabled", 3)
             end
         end)
@@ -851,10 +856,10 @@ do
             local json = HttpService:JSONEncode(data)
 
             pcall(makefolder, "Jade")
-            pcall(makefolder, "Jade/Configs")
+            pcall(makefolder, self._config_folder)
 
             local safeName = string.gsub(filename, "[^%w%s]", "")
-            local path = "Jade/Configs/" .. safeName .. ".json"
+            local path = self._config_folder .. "/" .. safeName .. ".json"
 
             writefile(path, json)
             return path
@@ -869,7 +874,7 @@ do
 
     function UILib:LoadConfig(filename)
         local safeName = string.gsub(filename, "[^%w%s]", "")
-        local path = "Jade/Configs/" .. safeName .. ".json"
+        local path = self._config_folder .. "/" .. safeName .. ".json"
         
         local ok, content = pcall(readfile, path)
         if not ok or type(content) ~= "string" or content == "" then 
@@ -893,20 +898,20 @@ do
                         for _, item in ipairs(self._tree[tabName]._items[sectionName]._items) do
                             local val = secData[item.label]
                             if val ~= nil then
-                                pcall(function()
-                                    if item.type_ == 'toggle' and type(val) == 'table' then
-                                        if val.value ~= nil then item.value = val.value end
-                                        if val.keybind ~= nil and item.keybind then item.keybind.value = val.keybind end
+                                if item.type_ == 'toggle' and type(val) == 'table' then
+                                    if val.value ~= nil then item.value = val.value end
+                                    if val.keybind ~= nil and item.keybind then item.keybind.value = val.keybind end
+                                    pcall(function()
                                         if val.colorpicker ~= nil and val.colorpicker.R and val.colorpicker.G and val.colorpicker.B and item.colorpicker then
                                             item.colorpicker.value = Color3.new(val.colorpicker.R, val.colorpicker.G, val.colorpicker.B)
                                             if item.colorpicker.callback then item.colorpicker.callback(item.colorpicker.value) end
                                         end
-                                        if item.callback then item.callback(item.value) end
-                                    elseif (item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox') then
-                                        item.value = val
-                                        if item.callback then item.callback(item.value) end
-                                    end
-                                end)
+                                    end)
+                                    if item.callback then pcall(item.callback, item.value) end
+                                elseif (item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox') then
+                                    item.value = val
+                                    if item.callback then pcall(item.callback, item.value) end
+                                end
                             end
                         end
                     end
