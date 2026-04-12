@@ -834,14 +834,16 @@ do
                 local sectionContent = tabContent._items[sectionName]
                 data[tabName][sectionName] = {}
                 for _, item in ipairs(sectionContent._items) do
+                    local key = item.label
+                    if item._mini_tab then key = item._mini_tab .. ":" .. key end
                     if item.type_ == 'toggle' then
-                        data[tabName][sectionName][item.label] = { 
+                        data[tabName][sectionName][key] = { 
                             value = item.value, 
                             keybind = item.keybind and item.keybind.value, 
                             colorpicker = item.colorpicker and { R = item.colorpicker.value.R, G = item.colorpicker.value.G, B = item.colorpicker.value.B } 
                         }
                     elseif item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox' then
-                        data[tabName][sectionName][item.label] = item.value
+                        data[tabName][sectionName][key] = item.value
                     end
                 end
             end
@@ -896,7 +898,9 @@ do
                 for sectionName, secData in pairs(tabData) do
                     if type(secData) == "table" and self._tree[tabName]._items[sectionName] then
                         for _, item in ipairs(self._tree[tabName]._items[sectionName]._items) do
-                            local val = secData[item.label]
+                            local key = item.label
+                            if item._mini_tab then key = item._mini_tab .. ":" .. key end
+                            local val = secData[key]
                             if val ~= nil then
                                 if item.type_ == 'toggle' and type(val) == 'table' then
                                     if val.value ~= nil then item.value = val.value end
