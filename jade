@@ -904,7 +904,12 @@ do
                             if val ~= nil then
                                 if item.type_ == 'toggle' and type(val) == 'table' then
                                     if val.value ~= nil then item.value = val.value end
-                                    if val.keybind ~= nil and item.keybind then item.keybind.value = val.keybind end
+                                    if val.keybind ~= nil and item.keybind then
+                                        item.keybind.value = val.keybind
+                                        if item.keybind.callback and val.keybind and self._inputs[val.keybind] then
+                                            pcall(item.keybind.callback, self._inputs[val.keybind].id, item.keybind.mode)
+                                        end
+                                    end
                                     pcall(function()
                                         if val.colorpicker ~= nil and val.colorpicker.R and val.colorpicker.G and val.colorpicker.B and item.colorpicker then
                                             item.colorpicker.value = Color3.new(val.colorpicker.R, val.colorpicker.G, val.colorpicker.B)
