@@ -618,7 +618,7 @@ do
         end)
 
         local themingSection = settingsTab:Section('Theming')
-        local themes = {'Jade', 'Ruby', 'Amethyst', 'Gold', 'Sapphire', 'Obsidian', 'Lotus'}
+        local themes = {'Jade', 'Ruby', 'Amethyst', 'Gold', 'Sapphire', 'Obsidian', 'Lotus', 'Light'}
         local themingTextColor, themingBodyColor, themingAccentColor, themingSubtextColor, themingBorder0Color, themingBorder1Color, themingSurface0Color, themingSurface1Color, themingCrustColor
         local themingTheme = themingSection:Dropdown('Theme', themes[1], themes, false, function(newValue)
             if not newValue then return end
@@ -700,6 +700,17 @@ do
                 themingSurface0Color:Set(Color3.fromRGB(229, 221, 176))
                 themingSurface1Color:Set(Color3.fromRGB(220, 213, 172))
                 themingCrustColor:Set(Color3.fromRGB(113, 110, 97))
+            elseif theme == themes[8] then
+                -- matcha
+                themingAccentColor:Set(Color3.fromRGB(76, 209, 130))
+                themingBodyColor:Set(Color3.fromRGB(22, 26, 30))
+                themingTextColor:Set(Color3.fromRGB(225, 228, 225))
+                themingSubtextColor:Set(Color3.fromRGB(130, 138, 132))
+                themingBorder1Color:Set(Color3.fromRGB(46, 52, 58))
+                themingBorder0Color:Set(Color3.fromRGB(34, 40, 44))
+                themingSurface1Color:Set(Color3.fromRGB(30, 36, 40))
+                themingSurface0Color:Set(Color3.fromRGB(24, 30, 34))
+                themingCrustColor:Set(Color3.fromRGB(14, 18, 22))
             end
         end)
 
